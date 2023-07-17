@@ -129,6 +129,11 @@ class Enemies(sprite.Sprite):
     def reset(self):
         main_window.blit(self.image,(self.rect.x, self.rect.y))  
 
+    def fire(self):
+        bullet1 = Bullet('bulletD.png',self.rect.right,self.rect.centery,30,15,10,direction) 
+        bullets.add(bullet1)
+        fire.play()
+
     def update(self):
         self.rect.x  -= self.speed 
         if abs(self.begin_x - self.rect.x) > 100:
@@ -136,7 +141,9 @@ class Enemies(sprite.Sprite):
 
         if sprite.spritecollide(self, walls_group, False):
             self.speed *= -1
-    
+        
+        if (abs(self.rect.x - player.rect.x) or (self.rect.y - player.rect.y)) < 2:
+            self.fire()
         
 
 
@@ -236,8 +243,6 @@ while game:
                 player.rect.top += player.speed
             elif direction == 'down':
                 player.rect.bottom -= player.speed
-
-
 
     display.update()
     clock.tick(FPS)
