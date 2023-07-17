@@ -1,6 +1,5 @@
 #подключение библиотек*
 from pygame import*
-
 #написание классов
 class Tank(sprite.Sprite):
     def __init__(self,player_image, health, armor, damage,speed,x,y):
@@ -8,7 +7,7 @@ class Tank(sprite.Sprite):
         self.image = transform.scale(image.load(player_image),(80,80))
         self.rect = self.image.get_rect()
         self.health = health
-        self.armor = armor
+        self.armor = armor 
         self.damage = damage
         self.speed = speed
         self.rect.x = x
@@ -25,16 +24,18 @@ class Tank(sprite.Sprite):
         if keys[K_d] and self.rect.x<long_window-90:
             self.rect.x += self.speed
             direction = 'right'
+            self.image = transform.scale(image.load('tankD.png'),(80,80))
 
         if keys[K_w] and self.rect.y>10:
             self.rect.y -= self.speed
             direction = 'up'
+            self.image = transform.scale(image.load('tankW.png'),(80,80))
 
         if keys[K_s] and self.rect.y<wide_window-90:
             self.rect.y += self.speed
             direction = 'down'
-        
-        
+            self.image = transform.scale(image.load('tankS.png'),(80,80))
+
 
     def fire(self):
         if direction == 'up':
@@ -87,6 +88,7 @@ class Bullet(sprite.Sprite):
         self.rect.x = bullet_x
         self.rect.y =bullet_y
         self.direction = bullet_direction
+
     def update(self):
         if self.direction == 'left':
             self.rect.x -= self.speed
@@ -107,10 +109,35 @@ class Bullet(sprite.Sprite):
             self.rect.y += self.speed
             if self.rect.y>1080:
                 self.kill()
+
     def draw(self):
         main_window.blit(self.image,(self.rect.x, self.rect.y))
 
 
+class Enemies(sprite.Sprite):
+    def __init__(self, enemy_image, health, damage, speed, x, y):
+        super().__init__()
+        self.image = transform.scale(image.load(enemy_image),(80,80))
+        self.rect = self.image.get_rect()
+        self.health = health
+        self.damage = damage
+        self.speed = speed
+        self.rect.x = x
+        self.rect.y = y
+        self.begin_x = x
+
+    def reset(self):
+        main_window.blit(self.image,(self.rect.x, self.rect.y))  
+
+    def update(self):
+        self.rect.x  -= self.speed 
+        if abs(self.begin_x - self.rect.x) > 100:
+            self.speed *= -1
+
+        if sprite.spritecollide(self, walls_group, False):
+            self.speed *= -1
+    
+        
 
 
 #создание игровой сцены
@@ -119,17 +146,34 @@ wide_window = 1080
 main_window = display.set_mode((long_window,wide_window))
 display.set_caption('Tank_mission')
 background = transform.scale(image.load('texture_scene.png'),(long_window,wide_window))
+
 #персонажи
 player = Tank('tankW.png',10,3,4,3,950,500)
-health_wall = 25
-
+enemy1 = Enemies('enemy_type1S.png',2,1,3,900,100)
+#health_wall = 25
+a = 0
+b =100
 #стены
 walls_group = sprite.Group()
 
 wall1 = Walls('wall_turfH.png',1100,-20,50,750)
 walls_group.add(wall1)
+
 wall2 = Walls('wall_stoneH.png',700,150,50,950)
 walls_group.add(wall2)
+
+wall3 = Walls('wall_turfV.png',1100,710,600,50)
+walls_group.add(wall3)
+
+wall4 = Walls('wall_turfH.png',1680,150,50,605)
+walls_group.add(wall4)
+
+wall5 = Walls('wall_turfH.png',1450,-20,50,600)
+walls_group.add(wall5)
+
+wall6 = Walls('wall_turfH.png',1680,900,50,150)
+walls_group.add(wall6)
+
 #стрельба
 mixer.init()
 direction = 'up'
@@ -153,26 +197,47 @@ while game:
             if i.key == K_SPACE:
                 player.fire()
 
+            if i.key == K_a:
+                player.rect.x -= player.speed
+                direction = 'left'
+                player.image = transform.scale(image.load('tankA.png'),(80,80))
+
+            if i.key == K_w:
+                player.rect.y -= player.speed
+                direction = 'up'
+                player.image = transform.scale(image.load('tankW.png'),(80,80))
+
     if end == False:
         main_window.blit(background,(0,0))
-        wall1.draw()
         player.update()
         player.reset()
-        wall1.draw()
-        wall2.draw()
+        walls_group.draw(main_window)
         bullets.update()
         bullets.draw(main_window)
-        '''if i.type == KEYDOWN:
-            if i.key == K_SPACE:
-                bullets.draw(main_window)
-                bullets.update()'''
-        if sprite.spritecollide(player,walls_group,False):
+        enemy1.reset()
+        
+        enemy1.update()
+        
+
+        '''if sprite.spritecollide(player,walls_group,False):
             health_wall-=1
             if health_wall == 0:
-                end =True
-            
+                end =True'''
+
+        if sprite.groupcollide(bullets, walls_group, True, False):   
+            pass
+
+        if sprite.spritecollide(player,walls_group,False):
+            if direction == 'left':
+               player.rect.left += player.speed
+            elif direction == 'right':
+                player.rect.right -= player.speed
+            elif direction == 'up':
+                player.rect.top += player.speed
+            elif direction == 'down':
+                player.rect.bottom -= player.speed
+
 
 
     display.update()
     clock.tick(FPS)
-
